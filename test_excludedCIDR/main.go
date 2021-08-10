@@ -28,7 +28,8 @@ func main() {
 	// Represent intervals in CIDR.
 	var excludedCIDRs []string
 	for _, interval := range excludedIPRanges {
-	  excludedCIDRs = append(excludedCIDRs, rangeToCIDR(interval)...)
+	  tmp := rangeToCIDR(interval)
+	  excludedCIDRs = append(excludedCIDRs, tmp...)
     }
     fmt.Println(len(excludedCIDRs))
     fmt.Println(excludedCIDRs)
@@ -36,13 +37,15 @@ func main() {
 
 func rangeToCIDR(ipRange []uint32) []string {
   var cidrs []string
+  // Pre-compute masks
   var mask []uint32
   mask = append(mask, uint32(0))
   for i := 32; i >= 0; i-- {
     mask = append(mask, mask[32-i] + 1 << i)
   }
   mask = mask[1:]
-  for ipRange[0] >= ipRange[1] {
+
+  for ipRange[0] <= ipRange[1] {
     maxSize := 32
     for maxSize > 0 {
       host := ipRange[0] & mask[maxSize-1]
@@ -52,13 +55,16 @@ func rangeToCIDR(ipRange []uint32) []string {
       maxSize--
     }
 
-    overlap := math.Log(float64(ipRange[1]-ipRange[0])+1) / math.Log(2)
+    overlap := math.Log(float64(ipRange[1]-ipRange[0]+1))/ math.Log(2)
     maxDiff := 32 - int(math.Floor(overlap))
     if maxSize < maxDiff {
       maxSize = maxDiff
     }
 
     cidrs = append(cidrs, uint32ToIPv4(ipRange[0])+"/"+strconv.Itoa(maxSize))
+    if float64(ipRange[0]) + math.Exp2(float64(32 - maxSize)) > float64(endIP) {
+      break
+    }
     ipRange[0] += uint32(math.Exp2(float64(32 - maxSize)))
   }
   return cidrs
