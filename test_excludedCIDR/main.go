@@ -14,7 +14,7 @@ const (
 )
 
 func main() {
-	inputs := [...]string{"10.0.0.3", "10.0.0.5"}
+	inputs := [...]string{"0.0.0.0", "255.255.255.255"}
 	ips := make([]string, len(inputs))
 	for i, ip := range inputs {
 	  ips[i] = ip
@@ -24,6 +24,7 @@ func main() {
 	// Calculate excluded intervals.
 	excludedIPRanges := excludeRange(ips)
 	fmt.Println(excludedIPRanges)
+	fmt.Println("Precompute")
 
 	// Represent intervals in CIDR.
 	var excludedCIDRs []string
@@ -31,6 +32,7 @@ func main() {
 	  tmp := rangeToCIDR(interval)
 	  excludedCIDRs = append(excludedCIDRs, tmp...)
     }
+    fmt.Println("Answer")
     fmt.Println(len(excludedCIDRs))
     fmt.Println(excludedCIDRs)
 }
@@ -55,6 +57,8 @@ func rangeToCIDR(ipRange []uint32) []string {
       maxSize--
     }
 
+    fmt.Println(maxSize)
+    fmt.Println(ipRange[1]-ipRange[0])
     overlap := math.Log(float64(ipRange[1]-ipRange[0]+1))/ math.Log(2)
     maxDiff := 32 - int(math.Floor(overlap))
     if maxSize < maxDiff {
